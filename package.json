@@ -1,0 +1,28 @@
+{
+  "name": "shopify-cli-theme-multipush",
+  "version": "1.0.0",
+  "description": "Push to multiple Shopify theme environments sequentially.",
+  "main": "dist/index.js",
+  "files": [
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "npm run build && oclif manifest"
+  },
+  "oclif": {
+    "commands": "./dist/commands",
+    "bin": "shopify",
+    "topicSeparator": " "
+  },
+  "dependencies": {
+    "@oclif/core": "^4.0.0",
+    "toml": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "oclif": "^4.0.0"
+  }
+}

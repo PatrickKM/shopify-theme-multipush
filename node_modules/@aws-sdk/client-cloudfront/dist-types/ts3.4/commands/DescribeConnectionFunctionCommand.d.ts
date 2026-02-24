@@ -1,0 +1,51 @@
+import { Command as $Command } from "@smithy/smithy-client";
+import { MetadataBearer as __MetadataBearer } from "@smithy/types";
+import {
+  CloudFrontClientResolvedConfig,
+  ServiceInputTypes,
+  ServiceOutputTypes,
+} from "../CloudFrontClient";
+import {
+  DescribeConnectionFunctionRequest,
+  DescribeConnectionFunctionResult,
+} from "../models/models_0";
+export { __MetadataBearer };
+export { $Command };
+export interface DescribeConnectionFunctionCommandInput
+  extends DescribeConnectionFunctionRequest {}
+export interface DescribeConnectionFunctionCommandOutput
+  extends DescribeConnectionFunctionResult,
+    __MetadataBearer {}
+declare const DescribeConnectionFunctionCommand_base: {
+  new (
+    input: DescribeConnectionFunctionCommandInput
+  ): import("@smithy/smithy-client").CommandImpl<
+    DescribeConnectionFunctionCommandInput,
+    DescribeConnectionFunctionCommandOutput,
+    CloudFrontClientResolvedConfig,
+    ServiceInputTypes,
+    ServiceOutputTypes
+  >;
+  new (
+    input: DescribeConnectionFunctionCommandInput
+  ): import("@smithy/smithy-client").CommandImpl<
+    DescribeConnectionFunctionCommandInput,
+    DescribeConnectionFunctionCommandOutput,
+    CloudFrontClientResolvedConfig,
+    ServiceInputTypes,
+    ServiceOutputTypes
+  >;
+  getEndpointParameterInstructions(): import("@smithy/middleware-endpoint").EndpointParameterInstructions;
+};
+export declare class DescribeConnectionFunctionCommand extends DescribeConnectionFunctionCommand_base {
+  protected static __types: {
+    api: {
+      input: DescribeConnectionFunctionRequest;
+      output: DescribeConnectionFunctionResult;
+    };
+    sdk: {
+      input: DescribeConnectionFunctionCommandInput;
+      output: DescribeConnectionFunctionCommandOutput;
+    };
+  };
+}

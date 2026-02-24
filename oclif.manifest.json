@@ -1,0 +1,58 @@
+{
+  "commands": {
+    "theme:multipush": {
+      "aliases": [],
+      "args": {},
+      "description": "Push to multiple Shopify theme environments using a wildcard",
+      "flags": {
+        "env": {
+          "char": "e",
+          "description": "Environment wildcard (e.g., \"production_*\")",
+          "name": "env",
+          "required": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "path": {
+          "char": "p",
+          "description": "Override the path to your compiled theme directory (optional)",
+          "name": "path",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "dry-run": {
+          "char": "d",
+          "description": "Simulate the process without actually pushing any files",
+          "name": "dry-run",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "async": {
+          "char": "a",
+          "description": "Run pushes concurrently (Warning: may hit Shopify API rate limits)",
+          "name": "async",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:multipush",
+      "pluginAlias": "shopify-cli-theme-multipush",
+      "pluginName": "shopify-cli-theme-multipush",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": false,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "multipush.js"
+      ]
+    }
+  },
+  "version": "1.0.0"
+}

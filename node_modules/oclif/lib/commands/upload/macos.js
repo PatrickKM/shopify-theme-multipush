@@ -1,0 +1,92 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core_1 = require("@oclif/core");
+const fs = __importStar(require("node:fs"));
+const aws_1 = __importDefault(require("../../aws"));
+const log_1 = require("../../log");
+const Tarballs = __importStar(require("../../tarballs"));
+const upload_util_1 = require("../../upload-util");
+const util_1 = require("../../util");
+class UploadMacos extends core_1.Command {
+    static description = 'Upload macos installers built with `pack macos`.';
+    static flags = {
+        'dry-run': core_1.Flags.boolean({ description: 'Run the command without uploading to S3.' }),
+        root: core_1.Flags.string({ char: 'r', default: '.', description: 'Path to oclif CLI root.', required: true }),
+        sha: core_1.Flags.string({
+            description: '7-digit short git commit SHA (defaults to current checked out commit).',
+            required: false,
+        }),
+        targets: core_1.Flags.string({
+            char: 't',
+            description: 'Comma-separated targets to upload (e.g.: darwin-x64,darwin-arm64).',
+        }),
+    };
+    async run() {
+        const { flags } = await this.parse(UploadMacos);
+        const buildConfig = await Tarballs.buildConfig(flags.root, { sha: flags?.sha, targets: flags?.targets?.split(',') });
+        const { config, dist, s3Config } = buildConfig;
+        const S3Options = {
+            ACL: s3Config.acl || 'public-read',
+            Bucket: s3Config.bucket,
+        };
+        const cloudKeyBase = (0, upload_util_1.commitAWSDir)(config.version, buildConfig.gitSha, s3Config);
+        const upload = async (arch) => {
+            const templateKey = (0, upload_util_1.templateShortKey)('macos', {
+                arch,
+                bin: config.bin,
+                sha: buildConfig.gitSha,
+                version: config.version,
+            });
+            const cloudKey = `${cloudKeyBase}/${templateKey}`;
+            const localPkg = dist(`macos/${templateKey}`);
+            if (fs.existsSync(localPkg))
+                await aws_1.default.s3.uploadFile(localPkg, { ...S3Options, CacheControl: 'max-age=86400', Key: cloudKey }, {
+                    dryRun: flags['dry-run'],
+                });
+            else
+                this.error('Cannot find macOS pkg', {
+                    suggestions: ['Run "oclif pack macos" before uploading'],
+                });
+        };
+        const arches = (0, util_1.uniq)(buildConfig.targets.filter((t) => t.platform === 'darwin').map((t) => t.arch));
+        await Promise.all(arches.map((a) => upload(a)));
+        (0, log_1.log)(`done uploading macos pkgs for v${config.version}-${buildConfig.gitSha}`);
+    }
+}
+exports.default = UploadMacos;
