@@ -31,7 +31,7 @@
         },
         "async": {
           "char": "a",
-          "description": "Run pushes concurrently (Warning: may hit Shopify API rate limits)",
+          "description": "Run pushes concurrently with custom progress bars",
           "name": "async",
           "allowNo": false,
           "type": "boolean"
@@ -54,5 +54,5 @@
       ]
     }
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
