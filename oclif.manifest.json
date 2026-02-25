@@ -35,6 +35,20 @@
           "name": "async",
           "allowNo": false,
           "type": "boolean"
+        },
+        "allow-live": {
+          "description": "Allow pushing to a live theme without confirmation prompts",
+          "name": "allow-live",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "batch-size": {
+          "description": "Number of themes to process concurrently in async mode",
+          "name": "batch-size",
+          "default": 10,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         }
       },
       "hasDynamicHelp": false,
@@ -54,5 +68,5 @@
       ]
     }
   },
-  "version": "1.0.1"
+  "version": "1.0.2"
 }
