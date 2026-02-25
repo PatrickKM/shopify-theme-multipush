@@ -1,6 +1,6 @@
 {
   "name": "shopify-cli-theme-multipush",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Push to multiple Shopify theme environments sequentially.",
   "main": "dist/index.js",
   "files": [
