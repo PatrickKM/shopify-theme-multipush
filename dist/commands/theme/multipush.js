@@ -32,15 +32,16 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@oclif/core");
 const child_process_1 = require("child_process");
-const util = __importStar(require("util"));
 const fs = __importStar(require("fs"));
 const toml = __importStar(require("toml"));
 const path = __importStar(require("path"));
-// Convert the callback-based 'exec' into a modern Promise for async support
-const execAsync = util.promisify(child_process_1.exec);
+const cli_progress_1 = __importDefault(require("cli-progress"));
 class ThemeMultiPush extends core_1.Command {
     static description = "Push to multiple Shopify theme environments using a wildcard";
     static flags = {
@@ -60,7 +61,7 @@ class ThemeMultiPush extends core_1.Command {
         }),
         async: core_1.Flags.boolean({
             char: "a",
-            description: "Run pushes concurrently (Warning: may hit Shopify API rate limits)",
+            description: "Run pushes concurrently with custom progress bars",
             default: false,
         }),
     };
@@ -77,7 +78,7 @@ class ThemeMultiPush extends core_1.Command {
         // 1. Read the config strictly from the ROOT directory
         const configPath = path.join(process.cwd(), "shopify.theme.toml");
         if (!fs.existsSync(configPath)) {
-            this.error(`shopify.theme.toml not found at root (${configPath}).`);
+            this.error(`shopify.theme.toml not found at root (${configPath}). Are you in the right directory?`);
         }
         const configFile = fs.readFileSync(configPath, "utf-8");
         const config = toml.parse(configFile);
@@ -106,24 +107,72 @@ class ThemeMultiPush extends core_1.Command {
         }
         else if (isAsync) {
             // --- ASYNC (CONCURRENT) LOGIC ---
-            this.log(`\n🚀 Starting CONCURRENT pushes to ${matchingEnvs.length} environments...`);
-            this.log(`(Native progress bars are hidden in async mode to prevent terminal UI glitches. Please wait...)`);
-            const pushPromises = matchingEnvs.map(async (env) => {
-                const envTomlPath = config.environments[env]?.path;
-                const resolvedPath = flags.path || envTomlPath || globalTomlPath || ".";
-                const pathArg = resolvedPath !== "." ? `--path ${resolvedPath}` : "";
-                const command = `shopify theme push -e ${env} ${pathArg}`.trim();
-                try {
-                    // No stdio: 'inherit' here, so it runs silently in the background
-                    await execAsync(command);
-                    this.log(`✅ [${env}] Successfully pushed!`);
-                }
-                catch (error) {
-                    this.warn(`❌ [${env}] Failed to push.`);
-                }
+            this.log(`\n🚀 Starting CONCURRENT pushes to ${matchingEnvs.length} environments...\n`);
+            // Initialize the MultiBar container
+            const multibar = new cli_progress_1.default.MultiBar({
+                clearOnComplete: false,
+                hideCursor: true,
+                barsize: 20, // <--- Add this line! Forces exactly 10 blocks.
+                format: " {bar} | {percentage}% | {env} | {status}",
+            }, cli_progress_1.default.Presets.shades_classic);
+            const pushPromises = matchingEnvs.map((env) => {
+                return new Promise((resolve) => {
+                    const envTomlPath = config.environments[env]?.path;
+                    const resolvedPath = flags.path || envTomlPath || globalTomlPath || ".";
+                    // Create an individual bar for this environment
+                    const bar = multibar.create(100, 0, {
+                        env: env.padEnd(20),
+                        status: "Starting...",
+                    });
+                    // Set up the arguments array for spawn
+                    const args = ["theme", "push", "-e", env];
+                    if (resolvedPath !== ".") {
+                        args.push("--path", resolvedPath);
+                    }
+                    // Spawn the process (shell: true helps with cross-platform compatibility)
+                    const child = (0, child_process_1.spawn)("shopify", args, { shell: true });
+                    // Create a reusable function for the regex scraping
+                    const handleOutput = (data) => {
+                        const output = data.toString();
+                        // Regex 1: Look for a direct percentage (e.g., "Uploading files to remote theme 45%")
+                        const percentMatch = output.match(/(\d+)%/);
+                        // Regex 2: Look for fractions just in case (e.g., "12/50")
+                        const fractionMatch = output.match(/(\d+)\/(\d+)/);
+                        if (percentMatch) {
+                            const percent = parseInt(percentMatch[1], 10);
+                            bar.update(percent, { status: `Uploading ${percent}%` });
+                        }
+                        else if (fractionMatch) {
+                            const current = parseInt(fractionMatch[1], 10);
+                            const total = parseInt(fractionMatch[2], 10);
+                            if (total > 0) {
+                                const percent = Math.round((current / total) * 100);
+                                bar.update(percent, { status: `Uploading ${current}/${total}` });
+                            }
+                        }
+                        else if (output.toLowerCase().includes("error")) {
+                            bar.update(100, { status: "Error detected!" });
+                        }
+                    };
+                    // Listen to BOTH standard output and standard error
+                    child.stdout.on("data", handleOutput);
+                    child.stderr.on("data", handleOutput);
+                    // Handle process completion
+                    child.on("close", (code) => {
+                        if (code === 0) {
+                            bar.update(100, { status: "✅ Done!" });
+                        }
+                        else {
+                            bar.update(100, { status: "❌ Failed!" });
+                        }
+                        // Always resolve so one failure doesn't crash Promise.all()
+                        resolve();
+                    });
+                });
             });
-            // Wait for all promises to resolve at the same time
+            // Wait for all spawned processes to finish
             await Promise.all(pushPromises);
+            multibar.stop();
             this.log("\n🎉 All concurrent pushes completed!");
         }
         else {
@@ -137,7 +186,7 @@ class ThemeMultiPush extends core_1.Command {
                 this.log(`🚀 Pushing to environment: ${env}`);
                 this.log(`========================================\n`);
                 try {
-                    // Uses stdio: 'inherit' to show standard Shopify progress bars
+                    // Uses stdio: 'inherit' to show standard Shopify progress bars natively
                     (0, child_process_1.execSync)(command, { stdio: "inherit" });
                     this.log(`\n✅ Successfully pushed to ${env}`);
                 }
