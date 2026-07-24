@@ -15,7 +15,6 @@
           "type": "option"
         },
         "path": {
-          "char": "p",
           "description": "Override the path to your compiled theme directory (optional)",
           "name": "path",
           "hasDynamicHelp": false,
@@ -23,20 +22,19 @@
           "type": "option"
         },
         "dry-run": {
-          "char": "d",
           "description": "Simulate the process without actually pushing any files",
           "name": "dry-run",
           "allowNo": false,
           "type": "boolean"
         },
         "async": {
-          "char": "a",
           "description": "Run pushes concurrently with custom progress bars",
           "name": "async",
           "allowNo": false,
           "type": "boolean"
         },
         "allow-live": {
+          "char": "a",
           "description": "Allow pushing to a live theme without confirmation prompts",
           "name": "allow-live",
           "allowNo": false,
@@ -68,5 +66,5 @@
       ]
     }
   },
-  "version": "1.0.2"
+  "version": "1.1.0"
 }
