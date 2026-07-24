@@ -51,20 +51,18 @@ class ThemeMultiPush extends core_1.Command {
             required: true,
         }),
         path: core_1.Flags.string({
-            char: "p",
             description: "Override the path to your compiled theme directory (optional)",
         }),
         "dry-run": core_1.Flags.boolean({
-            char: "d",
             description: "Simulate the process without actually pushing any files",
             default: false,
         }),
         async: core_1.Flags.boolean({
-            char: "a",
             description: "Run pushes concurrently with custom progress bars",
             default: false,
         }),
         "allow-live": core_1.Flags.boolean({
+            char: "a",
             description: "Allow pushing to a live theme without confirmation prompts",
             default: false,
         }),

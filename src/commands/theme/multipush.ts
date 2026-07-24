@@ -15,20 +15,18 @@ export default class ThemeMultiPush extends Command {
       required: true,
     }),
     path: Flags.string({
-      char: "p",
       description: "Override the path to your compiled theme directory (optional)",
     }),
     "dry-run": Flags.boolean({
-      char: "d",
       description: "Simulate the process without actually pushing any files",
       default: false,
     }),
     async: Flags.boolean({
-      char: "a",
       description: "Run pushes concurrently with custom progress bars",
       default: false,
     }),
     "allow-live": Flags.boolean({
+      char: "a",
       description: "Allow pushing to a live theme without confirmation prompts",
       default: false,
     }),
